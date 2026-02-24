@@ -14,6 +14,9 @@ const currentEffect = ref('particles')
 // Audio source mode: 'mic' or 'system'
 const audioMode = ref('system')
 
+// Control panel visibility
+const showControls = ref(false)
+
 // Effects configuration
 const effects = [
   { id: 'background', name: 'Background Pulse', component: BackgroundPulse },
@@ -45,6 +48,11 @@ const toggleAudio = async () => {
     }
   }
 }
+
+// Toggle control panel visibility
+const toggleControls = () => {
+  showControls.value = !showControls.value
+}
 </script>
 
 <template>
@@ -59,84 +67,92 @@ const toggleAudio = async () => {
       :volume-level="volumeLevel"
     />
 
+    <!-- Floating Toggle Button -->
+    <button class="toggle-button" @click="toggleControls" :title="showControls ? '隐藏控制面板' : '显示控制面板'">
+      <span v-if="showControls">✕</span>
+      <span v-else>⚙️</span>
+    </button>
+
     <!-- Control Panel -->
-    <div class="control-panel">
-      <div class="control-header">
-        <h1>NotesDance</h1>
-        <button
-          :class="['start-button', { active: isRunning }]"
-          @click="toggleAudio"
-          :disabled="isRunning"
-        >
-          {{ isRunning ? 'Running' : 'Start' }}
-        </button>
-      </div>
-
-      <!-- Audio Source Selection -->
-      <div class="audio-source-selector" v-if="!isRunning">
-        <span class="selector-label">Audio Source:</span>
-        <div class="mode-buttons">
+    <Transition name="panel-slide">
+      <div class="control-panel" v-if="showControls">
+        <div class="control-header">
+          <h1>NotesDance</h1>
           <button
-            :class="['mode-button', { active: audioMode === 'mic' }]"
-            @click="audioMode = 'mic'"
+            :class="['start-button', { active: isRunning }]"
+            @click="toggleAudio"
+            :disabled="isRunning"
           >
-            🎤 Microphone
-          </button>
-          <button
-            :class="['mode-button', { active: audioMode === 'system' }]"
-            @click="audioMode = 'system'"
-          >
-            🔊 System Audio
+            {{ isRunning ? 'Running' : 'Start' }}
           </button>
         </div>
-        <p class="hint-text" v-if="audioMode === 'system'">
-          捕获系统播放的音频（如网易云音乐）- 需要勾选"分享系统音频"
-        </p>
-        <p class="hint-text" v-else>
-          捕获麦克风输入的声音
-        </p>
-      </div>
 
-      <!-- Effect Selection -->
-      <div class="effect-selector">
-        <button
-          v-for="effect in effects"
-          :key="effect.id"
-          :class="['effect-button', { active: currentEffect === effect.id }]"
-          @click="currentEffect = effect.id"
-        >
-          {{ effect.name }}
-        </button>
-      </div>
+        <!-- Audio Source Selection -->
+        <div class="audio-source-selector" v-if="!isRunning">
+          <span class="selector-label">Audio Source:</span>
+          <div class="mode-buttons">
+            <button
+              :class="['mode-button', { active: audioMode === 'mic' }]"
+              @click="audioMode = 'mic'"
+            >
+              🎤 Microphone
+            </button>
+            <button
+              :class="['mode-button', { active: audioMode === 'system' }]"
+              @click="audioMode = 'system'"
+            >
+              🔊 System Audio
+            </button>
+          </div>
+          <p class="hint-text" v-if="audioMode === 'system'">
+            捕获系统播放的音频（如网易云音乐）- 需要勾选"分享系统音频"
+          </p>
+          <p class="hint-text" v-else>
+            捕获麦克风输入的声音
+          </p>
+        </div>
 
-      <!-- Audio Level Indicators -->
-      <div v-if="isRunning" class="audio-levels">
-        <div class="level-item">
-          <span class="level-label">Bass</span>
-          <div class="level-bar">
-            <div class="level-fill" :style="{ width: (bassLevel / 255 * 100) + '%', background: 'linear-gradient(to right, #8a2be2, #da70d6)' }"></div>
-          </div>
+        <!-- Effect Selection -->
+        <div class="effect-selector">
+          <button
+            v-for="effect in effects"
+            :key="effect.id"
+            :class="['effect-button', { active: currentEffect === effect.id }]"
+            @click="currentEffect = effect.id"
+          >
+            {{ effect.name }}
+          </button>
         </div>
-        <div class="level-item">
-          <span class="level-label">Mid</span>
-          <div class="level-bar">
-            <div class="level-fill" :style="{ width: (midLevel / 255 * 100) + '%', background: 'linear-gradient(to right, #4169e1, #87ceeb)' }"></div>
+
+        <!-- Audio Level Indicators -->
+        <div v-if="isRunning" class="audio-levels">
+          <div class="level-item">
+            <span class="level-label">Bass</span>
+            <div class="level-bar">
+              <div class="level-fill" :style="{ width: (bassLevel / 255 * 100) + '%', background: 'linear-gradient(to right, #8a2be2, #da70d6)' }"></div>
+            </div>
           </div>
-        </div>
-        <div class="level-item">
-          <span class="level-label">Treble</span>
-          <div class="level-bar">
-            <div class="level-fill" :style="{ width: (trebleLevel / 255 * 100) + '%', background: 'linear-gradient(to right, #ffd700, #ffff00)' }"></div>
+          <div class="level-item">
+            <span class="level-label">Mid</span>
+            <div class="level-bar">
+              <div class="level-fill" :style="{ width: (midLevel / 255 * 100) + '%', background: 'linear-gradient(to right, #4169e1, #87ceeb)' }"></div>
+            </div>
           </div>
-        </div>
-        <div class="level-item">
-          <span class="level-label">Volume</span>
-          <div class="level-bar">
-            <div class="level-fill" :style="{ width: (volumeLevel / 255 * 100) + '%', background: 'linear-gradient(to right, #ff6b6b, #ffd93d)' }"></div>
+          <div class="level-item">
+            <span class="level-label">Treble</span>
+            <div class="level-bar">
+              <div class="level-fill" :style="{ width: (trebleLevel / 255 * 100) + '%', background: 'linear-gradient(to right, #ffd700, #ffff00)' }"></div>
+            </div>
+          </div>
+          <div class="level-item">
+            <span class="level-label">Volume</span>
+            <div class="level-bar">
+              <div class="level-fill" :style="{ width: (volumeLevel / 255 * 100) + '%', background: 'linear-gradient(to right, #ff6b6b, #ffd93d)' }"></div>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </Transition>
   </div>
 </template>
 
@@ -164,22 +180,69 @@ body {
   overflow: hidden;
 }
 
+/* Floating Toggle Button */
+.toggle-button {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(10px);
+  color: #fff;
+  font-size: 24px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.toggle-button:hover {
+  background: rgba(138, 43, 226, 0.6);
+  transform: scale(1.1);
+  box-shadow: 0 6px 20px rgba(138, 43, 226, 0.4);
+}
+
+.toggle-button:active {
+  transform: scale(0.95);
+}
+
+/* Control Panel */
 .control-panel {
   position: fixed;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
+  top: 80px;
+  right: 20px;
   background: rgba(0, 0, 0, 0.85);
   backdrop-filter: blur(10px);
   border-radius: 16px;
   padding: 20px;
-  min-width: 350px;
-  max-width: 90vw;
-  max-height: 80vh;
+  width: 320px;
+  max-height: 70vh;
   overflow-y: auto;
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   z-index: 1000;
+}
+
+/* Panel slide animation */
+.panel-slide-enter-active,
+.panel-slide-leave-active {
+  transition: all 0.3s ease;
+}
+
+.panel-slide-enter-from {
+  opacity: 0;
+  transform: translateY(-20px) scale(0.95);
+}
+
+.panel-slide-leave-to {
+  opacity: 0;
+  transform: translateY(-20px) scale(0.95);
 }
 
 .control-header {
